@@ -1,0 +1,152 @@
+NUME: Dragne Lavinia-Stefana, Vasilache Raluca
+GRUPA: 314 CA
+
+
+				Tema #3: Academia Network
+
+
+	Proiectul contine :
+
+	- 5 fisiere sursa : publications.c, Hashtable.c,
+			    LinkedList.c, Queue.c
+	- 5 fisiere header asociate : publications.h, Hashtable.h,
+			    LinkedList.h, Queue.h
+	- un fisier Makefile
+	- Un fisier README
+
+	Implementare :
+	
+	Toate datele necesare pentru implementarea task-urilor
+au fost centralizate in mai multe Hashtable-uri, care au fost incluse
+in structura publications_data, dupa cum urmeaza:
+
+	1. ht_list - hashtable implementat cu liste; trateaza coliziunile cu 
+direct chaining; folosit la task 1; contine structuri de tipul
+article_info_list
+
+	2. ht_reff - hashtable implementat cu liste; trateaza coliziunile cu 
+direct chaining; este folosit la task 1 si 2; contine structuri de tipul 
+article_info_list_reff care au doua campuri : id = id-ul articolului, 
+freq = numarul sau de citari;
+
+	3. ht_venue - hashtable implementat cu liste; trateaza coliziunile cu 
+direct chaining; folosit la task 2; contine structuri de tipul 
+article_info_list_venue care au doua campuri: id = id-ul articolului,
+venue = conferinta la care a fost publicat.
+
+	4. ht_field - hashtable implementat cu liste; trateaza coliziunile cu 
+direct chaining; folosit la task 7; contine structuri de tipul 
+article_info_list_field care au doua campuri: id = id-ul autorului,
+field = domeniul pe care il studiaza.
+
+	5. ht_author - hashtable implementat cu liste; trateaza coliziunile cu 
+direct chaining; folosit la task 8; contine structuri de tipul 
+article_info_list_author care au trei campuri: id_paper = id-ul articolului,
+id_author = id-ul articolului, year = anul in care a fost publicat articolul.
+
+	Implementarile au fost gandite cu hashtable datorita timpului
+scurt de cautare pe care il facilitateaza, in raport cu volumul mare
+de date de intrare.
+
+	Descriere solutii:
+
+	TASK 1:
+	
+	Articolele introduse printr-un apel al functiei add_paper
+vor fi memorate intr-un hashtable de tip ht_list, pentru ca vom
+avea nevoie de toate campurile asociate structurii article_info_list.
+	Pentru rezolvarea cerintei, cautarea articolului care a influentat
+paper-ul X, cu cel mai mic an al aparitiei si, daca este cazul, cel mai
+mare numar de citari, vom folosit algoritmul bfs implementat cu un queue,
+simulat pe referinte, de aceea am introdus un camp in structura article_info_list,
+int visited, care va fi:
+	- 0 : daca nu a fost vizitat
+	- 1 : daca a fost adaugat in coada
+	- 2 : daca a fost vizitat atat el cat si toate referintele sale
+	Pentru alegera articolului in cazul in care au fost gasite mai multe
+cu acelasi an al aparitiei se foloseste ht_reff, care memoreaza pentru fiecare
+articol numarul sau de citari. Ht_reff se completeaza la fiecare apel al functiei
+add_paper: pentru fiecare articol adaugat, i se cauta toate referintele in ht_reff.
+Daca au fost gasite li se creste frecventa, iar in caz contrar se adauga si se initializeaza
+frecventa cu 1; 
+	Cand se adauga articolul X in coada, se va actualiza titlul
+lui oldest_influence. Se pot distinge 3 cazuri:
+	1. Daca X are anul de aparitie mai mic decat cel mai mic an
+gasit pana la momentul respectiv, se actualizeaza name, min_year, max_freq,
+min_id cu datele lui X;
+	2. Daca X are anul aparitiei egal cu min_year gasit pana in momentul respectiv
+si frecventa mai mare decat max_freq, se actualizeaza name, max_freq si min_d 
+cu datele lui X;
+	3. Daca X are si anul = min_year si frecventa = max_freq, dar are id-ul
+mai mare decat min_id, se actualizeaza name si min_id cu datele lui X;
+	Pentru ca un articol poate fi adaugat in coada la mai multe apeluri
+ale functiei get_oldest_influence, dupa prima lui adaugare, visited va fi egal cu 2
+si astfel nu va mai fi luat in considerare a doua oara. Pentru remedierea problemei
+se va folosi functia clear_visited de fiecare data cand se apeleaza get_oldest influence,
+care, in mod recursiv, va reseta visited la 0 pentru toate nodurile care au fost folosite
+in bfs.
+
+
+	TASK 2:
+
+	S-a ales folosirea hashtable-ului ht_venue, care foloseste drept cheie venue.
+Astfel toate articolele care au acelasi venue vor fi usor de gasit, pentru ca se vor afla
+pe acelasi bucket. Timpul de cautare va fi redus semnificativ.
+	Pentru calcularea numarului total de citari vom folosi din nou ht_reff.
+	Pentru calcularea numarului total de articole are au un venue corespunzator, se parcurge
+lista inlantuita generata. Fiecare articol gasit in lista se va cauta in ht_reff, iar freq
+(numarul sau de citari), va fi adaugat la numarul total de citari.
+	Factorul de impact se calculeaza ca raportul dintre numarul total_venue si citations.
+	Toate operatiile se realizeaza cu ajutorul functiei get_venue, care returneaza
+factorul de impact.
+
+
+	TASK 6:
+
+	Se va folosi vectorul de frecventa freq din structura PublData. 
+	La adaugarea unui articol nou in hashtable frecventa de aparitie a anului
+sau va fi marita. Astfel in functia get_number_of_papers_between_date se va face doar o simpla
+parcurgere a vectorului freq, de pe pozitia early_date pana pe pozitia late_date.
+
+
+	TASK 7:
+
+	Se va folosi ht_list si ht_field. Hashtbale-ul ht_field foloseste drept cheie
+domeniul unui articol. La parcurgerea lui ht_field se verifica, pentru fiecare
+articol, daca studiaza domeniul dat. Daca conditia este indeplinita, pe baza id-ului, se cauta
+articolul in hashtable-ul ht_list. Pentru toti autorii unui articol se verifica daca sunt de la
+institutia data si in caz afirmativ sunt cautati in vectorul de autori v_authors. Daca nu sunt
+gasiti, sunt adaugati si se mareste numarul total de autori(total_ath) gasiti. Task-ul foloseste
+funtiile get_ht_list_field si find_authors.
+
+	TASK 8:
+
+	Se va folosi ht_author. Hashtbale-ul ht_author foloseste drept cheie d-ul autorilor.
+La parcurgerea lui ht_author se verifica, pentru fiecare autor, daca este cel cautat. 
+Daca conditia este indeplinita si anul in care a fost publicat este mai mic decat un min_year, initial
+2020, atunci vectorul histograma hist este realocat si reinitializat cu 0. Pe baza id-ului paper-ului,
+se cauta numarul lui de citari in hashtable-ul ht_reff. Se adauga numarul de citari in vectorul hist
+pe pozitia corespunzatoare. Dimensiunea vectorului hist va fi 2020 - min_year + 1.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
